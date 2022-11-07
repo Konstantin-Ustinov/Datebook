@@ -5,12 +5,13 @@ import net.datebook.www.utils.Util.Relate;
 import net.datebook.www.utils.Util.Repeat;
 import static net.datebook.www.utils.Util.formatter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
 
 
-public class Task implements Repeatable {
+public class Task implements Repeatable{
     public static int globalId;
     private int id;
     private String heading;
@@ -75,10 +76,6 @@ public class Task implements Repeatable {
         this.deadLine = deadLine != null ? deadLine : LocalDateTime.now();
     }
 
-    public void setRepeat(Repeat repeat) {
-        this.repeat = repeat != null ? repeat : Repeat.NONE;
-    }
-
     @Override
     public String toString() {
         return "ID задачи: " + id +
@@ -110,13 +107,8 @@ public class Task implements Repeatable {
     }
 
     @Override
-    public LocalDateTime findSoonDate() {
-        switch (repeat) {
-            case EVERY_DAY: return deadLine.plusDays(1);
-            case EVERY_WEEK: return deadLine.plusWeeks(1);
-            case EVERY_MONTH: return deadLine.plusMonths(1);
-            case EVERY_EAR: return deadLine.plusYears(1);
-        }
-        return deadLine;
+    public LocalDateTime findNextDate(LocalDate date) {
+
+        return getDeadLine();
     }
 }

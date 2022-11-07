@@ -1,6 +1,7 @@
 package net.datebook.www;
 
-import net.datebook.www.entities.Task;
+import net.datebook.www.entities.*;
+import net.datebook.www.interfaces.Repeatable;
 import net.datebook.www.services.TaskService;
 import net.datebook.www.utils.Util;
 
@@ -95,18 +96,18 @@ public class Main {
         System.out.println("4 - каждый месяц");
         System.out.println("5 - каждый год");
 
+        Task newTask = null;
+
         while (repeat == null) {
             switch (enterText()) {
-                case "1" -> repeat = Repeat.NONE;
-                case "2" -> repeat = Repeat.EVERY_DAY;
-                case "3" -> repeat = Repeat.EVERY_WEEK;
-                case "4" -> repeat = Repeat.EVERY_MONTH;
-                case "5" -> repeat = Repeat.EVERY_EAR;
+                case "1" -> {repeat = Repeat.NONE;  newTask = new Task(taskHeading, taskDescription, relate, deadline, repeat);}
+                case "2" -> {repeat = Repeat.EVERY_DAY; newTask = new everyDayTask(taskHeading, taskDescription, relate, deadline, repeat);}
+                case "3" -> {repeat = Repeat.EVERY_WEEK; newTask = new everyWeekTask(taskHeading, taskDescription, relate, deadline, repeat);}
+                case "4" -> {repeat = Repeat.EVERY_MONTH; newTask = new everyMonthTask(taskHeading, taskDescription, relate, deadline, repeat);}
+                case "5" -> {repeat = Repeat.EVERY_EAR; newTask = new everyYearTask(taskHeading, taskDescription, relate, deadline, repeat);}
                 default -> System.out.println("Введите цифру из списка");
             }
         }
-
-        Task newTask = new Task(taskHeading, taskDescription, relate, deadline, repeat);
 
         message = taskService.addOrUpdate(newTask) ? "Задача была добавлена" : "Задача была обновлена";
     }
@@ -188,7 +189,7 @@ public class Main {
             LocalDate date = enterDate();
 
             for (var task : taskService.getTasksList().values()) {
-                if (date.isEqual(task.getDeadLine().toLocalDate())) {
+                if (date.isEqual(task.findNextDate(date).toLocalDate())) {
                     tasks.add(task);
                 }
             }
@@ -212,20 +213,25 @@ public class Main {
     }
 
     private static void showTasksList(ArrayList<Task> tasks) {
-        LocalDateTime date = tasks.get(0).getDeadLine();
-        System.out.println("Показаны задачи на дату: " + tasks.get(0).getDeadLine().format(formatter));
-        for (int i = 0; i < tasks.size(); i++) {
-            if (i != 0) {
-                System.out.println("------------------");
+        try {
+            LocalDateTime date = tasks.get(0).getDeadLine();
+            System.out.println("Показаны задачи на дату: " + tasks.get(0).getDeadLine().format(formatter));
+            for (int i = 0; i < tasks.size(); i++) {
+                if (i != 0) {
+                    System.out.println("------------------");
+                }
+                if (!date.isEqual(tasks.get(i).getDeadLine())) {
+                    System.out.println();
+                    System.out.println("Задачи на число: " + tasks.get(i).getDeadLine().format(formatter));
+                }
+                date = tasks.get(i).getDeadLine();
+                System.out.print((i + 1) + ") ");
+                System.out.println(tasks.get(i).showShortTask());
             }
-            if (!date.isEqual(tasks.get(i).getDeadLine())) {
-                System.out.println();
-                System.out.println("Задачи на число: " + tasks.get(i).getDeadLine().format(formatter));
-            }
-            date = tasks.get(i).getDeadLine();
-            System.out.print((i + 1) + ") ");
-            System.out.println(tasks.get(i).showShortTask());
+        } catch (IndexOutOfBoundsException e) {
+            System.out.println("На эту дату нет задач.");
         }
+
     }
 
     private static void taskMenu(Task task) {
@@ -254,7 +260,7 @@ public class Main {
                     showMenu = false;}
                 case "2" -> {deleteOrRestore(task.getId());
                     showMenu = false;}
-                case "3" -> {showMessage("Следующая дата задачи: " + task.findSoonDate().format(formatter));
+                case "3" -> {showMessage("Следующая дата задачи: " + task.findNextDate(LocalDate.now()).format(formatter));
                     showMenu = false;}
                 case "0" -> showMenu = false;
                 default -> System.out.println("Вы ввели комманду: " + input
